@@ -1,0 +1,24 @@
+---
+- name: Sanity-check the configured subnet is an RFC1918 (private) range
+  ansible.builtin.assert:
+    that:
+      - netsentinel_local_subnet is match('^(10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.)')
+    fail_msg: >-
+      netsentinel_local_subnet ({{ netsentinel_local_subnet }}) is not an RFC1918
+      range. The sensor only scans your own LAN - refusing to continue.
+    success_msg: "local_subnet {{ netsentinel_local_subnet }} looks like a private LAN."
+
+- name: Ensure sensor service is enabled and running
+  ansible.builtin.systemd:
+    name: netsentinel-sensor.service
+    state: started
+    enabled: true
+
+- name: Show recent sensor logs
+  ansible.builtin.command: journalctl -u netsentinel-sensor.service -n 20 --no-pager
+  changed_when: false
+  register: sensorlog
+
+- name: Sensor log tail
+  ansible.builtin.debug:
+    var: sensorlog.stdout_lines

@@ -1,0 +1,16 @@
+# NetSentinel threat-intel blocklist (sample).
+#
+# One indicator per line: a domain, a parent domain, or an IPv4/IPv6 address.
+# "hosts file" syntax is tolerated, e.g.  0.0.0.0 tracker.example
+# Lines starting with # or ! are comments.
+#
+# Replace this file with a real feed. Good free sources to cron-refresh:
+#   - https://urlhaus.abuse.ch/downloads/hostfile/
+#   - https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+#   - https://v.firebog.net/hosts/lists.php  (aggregator index)
+# See deploy/scripts/refresh-blocklist.sh
+
+# --- harmless example entries so the pipeline has something to match in a demo:
+malware-test.example
+phishing.example
+c2.evil.example

@@ -1,0 +1,82 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "net-sentinel"
+version = "0.1.0"
+description = "Distributed home-network security monitor for a pair of Raspberry Pi (sensor + hub)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Görkem Güler" }]
+keywords = ["security", "monitoring", "raspberry-pi", "ids", "network", "dns", "homelab"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Security",
+    "Topic :: System :: Networking :: Monitoring",
+]
+
+dependencies = [
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "sqlmodel>=0.0.21",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "httpx>=0.27",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+    "apscheduler>=3.10",
+    "rich>=13.7",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+sensor = [
+    # scapy is only needed on the sensor node for passive DNS + ARP sniffing.
+    "scapy>=2.5",
+]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+[project.urls]
+Homepage = "https://github.com/gorkemguler/net-sentinel"
+Documentation = "https://github.com/gorkemguler/net-sentinel/tree/main/docs"
+Issues = "https://github.com/gorkemguler/net-sentinel/issues"
+
+[project.scripts]
+netsentinel = "netsentinel.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/netsentinel"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM", "PTH", "RUF"]
+ignore = ["B008"]  # FastAPI uses function calls in argument defaults (Depends()).
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]

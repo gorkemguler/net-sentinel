@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}NetSentinel &middot; Alerts{% endblock %}
+{% block body %}
+<h2>Alerts ({{ alerts | length }})</h2>
+<p class="muted">Acknowledge with <code>POST /api/alerts/&lt;id&gt;/ack</code>.</p>
+<table>
+  <tr><th>When</th><th>Sev</th><th>Title</th><th>Detail</th><th>Delivered</th><th>Ack</th></tr>
+  {% for a in alerts %}
+  <tr>
+    <td class="muted">{{ a.ts | ago }}</td>
+    <td><span class="badge sev-{{ a.severity }}">{{ a.severity }}</span></td>
+    <td>{{ a.title }}</td>
+    <td class="muted">{{ a.body }}</td>
+    <td>{{ "✓" if a.delivered else "·" }}</td>
+    <td>{{ "✓" if a.acknowledged else "·" }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="muted">No alerts.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

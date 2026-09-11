@@ -1,0 +1,74 @@
+---
+- name: Base packages
+  ansible.builtin.apt:
+    name: "{{ base_packages + role_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  vars:
+    base_packages: [git, python3, python3-venv, python3-dev, curl, ca-certificates]
+    role_packages: "{{ [] if netsentinel_role == 'hub' else ['nmap', 'libpcap0.8', 'iproute2'] }}"
+
+- name: Service account
+  ansible.builtin.user:
+    name: netsentinel
+    system: true
+    home: /opt/netsentinel
+    shell: /usr/sbin/nologin
+    create_home: false
+
+- name: Directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+  loop:
+    - { path: /opt/netsentinel }
+    - { path: /etc/netsentinel, mode: "0750", group: netsentinel }
+    - { path: /var/lib/netsentinel, owner: netsentinel, group: netsentinel }
+
+- name: Clone / update source
+  ansible.builtin.git:
+    repo: "{{ netsentinel_repo_url }}"
+    dest: /opt/netsentinel/src
+    version: "{{ netsentinel_ref | default('main') }}"
+    depth: 1
+  notify: restart netsentinel
+
+- name: Create virtualenv and install package
+  ansible.builtin.pip:
+    name: "/opt/netsentinel/src{{ netsentinel_extras }}"
+    virtualenv: /opt/netsentinel/venv
+    virtualenv_command: python3 -m venv
+    extra_args: --upgrade
+  notify: restart netsentinel
+
+- name: Render environment file
+  ansible.builtin.template:
+    src: netsentinel.env.j2
+    dest: /etc/netsentinel/netsentinel.env
+    owner: root
+    group: netsentinel
+    mode: "0640"
+  notify: restart netsentinel
+
+- name: Fetch IEEE OUI list (best effort)
+  ansible.builtin.get_url:
+    url: https://standards-oui.ieee.org/oui/oui.csv
+    dest: /var/lib/netsentinel/oui.csv
+    owner: netsentinel
+    mode: "0644"
+    timeout: 30
+  failed_when: false
+
+- name: Install systemd unit
+  ansible.builtin.copy:
+    src: "/opt/netsentinel/src/deploy/systemd/{{ netsentinel_unit }}"
+    remote_src: true
+    dest: "/etc/systemd/system/{{ netsentinel_unit }}"
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart netsentinel

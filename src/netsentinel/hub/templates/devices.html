@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}NetSentinel &middot; Devices{% endblock %}
+{% block body %}
+<h2>Device inventory ({{ devices | length }})</h2>
+<p class="muted">Acknowledge a device with
+<code>PATCH /api/devices/&lt;mac&gt;?is_known=true</code> so it stops showing as new.</p>
+<table>
+  <tr><th>Status</th><th>Host</th><th>IP</th><th>Vendor</th><th>MAC</th><th>First seen</th><th>Last seen</th><th>Note</th></tr>
+  {% for d in devices %}
+  <tr>
+    <td><span class="badge {{ 'pill-known' if d.is_known else 'pill-unknown' }}">{{ 'known' if d.is_known else 'new' }}</span></td>
+    <td>{{ d.hostname or "—" }}</td>
+    <td>{{ d.ip or "—" }}</td>
+    <td>{{ d.vendor or "—" }}</td>
+    <td><code>{{ d.mac }}</code></td>
+    <td class="muted">{{ d.first_seen | ago }}</td>
+    <td class="muted">{{ d.last_seen | ago }}</td>
+    <td class="muted">{{ d.note }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8" class="muted">No devices recorded yet.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

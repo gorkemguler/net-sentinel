@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}NetSentinel &middot; DNS{% endblock %}
+{% block body %}
+<h2>Top queried names &mdash; last 24h</h2>
+<table>
+  <tr><th>#</th><th>Name</th><th>Hits</th></tr>
+  {% for qname, hits, flagged in top %}
+  <tr>
+    <td class="muted">{{ loop.index }}</td>
+    <td class="{{ 'flag' if flagged }}">{{ qname }}{% if flagged %} &#9888;{% endif %}</td>
+    <td>{{ hits }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="3" class="muted">No passive-DNS data yet. Is the sensor sniffing the right interface?</td></tr>
+  {% endfor %}
+</table>
+
+<h2>Flagged lookups</h2>
+<table>
+  <tr><th>When</th><th>Client</th><th>Name</th><th>Answer</th></tr>
+  {% for r in flagged %}
+  <tr>
+    <td class="muted">{{ r.ts | ago }}</td>
+    <td>{{ r.client_ip }}</td>
+    <td class="flag">{{ r.qname }}</td>
+    <td class="muted">{{ r.answer or "—" }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4" class="muted">Nothing flagged against the blocklist. Good.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

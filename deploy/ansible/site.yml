@@ -1,0 +1,29 @@
+---
+# One command to provision both Pis:
+#   ansible-playbook -i inventory.ini site.yml
+#
+# Re-run any time to update to the latest commit on `netsentinel_ref`.
+
+- name: NetSentinel hub
+  hosts: hub
+  become: true
+  gather_facts: true
+  vars:
+    netsentinel_role: hub
+    netsentinel_extras: "[]"
+    netsentinel_unit: netsentinel-hub.service
+  roles:
+    - role: common
+    - role: hub
+
+- name: NetSentinel sensor
+  hosts: sensor
+  become: true
+  gather_facts: true
+  vars:
+    netsentinel_role: sensor
+    netsentinel_extras: "[sensor]"
+    netsentinel_unit: netsentinel-sensor.service
+  roles:
+    - role: common
+    - role: sensor

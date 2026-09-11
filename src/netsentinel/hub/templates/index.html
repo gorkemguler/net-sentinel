@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}NetSentinel &middot; Overview{% endblock %}
+{% block body %}
+<div class="cards">
+  <div class="card"><div class="n">{{ counters.devices }}</div><div class="l">Devices known</div></div>
+  <div class="card"><div class="n">{{ counters.active }}</div><div class="l">Active (15m)</div></div>
+  <div class="card {{ 'warn' if counters.unknown }}"><div class="n">{{ counters.unknown }}</div><div class="l">Unacknowledged</div></div>
+  <div class="card {{ 'bad' if counters.alerts_open }}"><div class="n">{{ counters.alerts_open }}</div><div class="l">Open alerts</div></div>
+  <div class="card {{ 'bad' if counters.dns_flagged }}"><div class="n">{{ counters.dns_flagged }}</div><div class="l">Flagged DNS (24h)</div></div>
+</div>
+
+<h2>Alerts &mdash; last 24h</h2>
+<div class="spark">
+  {% set peak = (alert_series | max) or 1 %}
+  {% for v in alert_series %}<span style="height: {{ (v / peak * 100) | round }}%" title="{{ v }}"></span>{% endfor %}
+</div>
+
+<h2>Recent alerts</h2>
+<table>
+  <tr><th>When</th><th>Severity</th><th>Title</th></tr>
+  {% for a in recent_alerts %}
+  <tr>
+    <td class="muted">{{ a.ts | ago }}</td>
+    <td><span class="badge sev-{{ a.severity }}">{{ a.severity }}</span></td>
+    <td>{{ a.title }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="3" class="muted">No alerts yet &mdash; the network looks quiet.</td></tr>
+  {% endfor %}
+</table>
+
+<h2>Newest devices</h2>
+<table>
+  <tr><th>First seen</th><th>Host / IP</th><th>Vendor</th><th>MAC</th><th></th></tr>
+  {% for d in new_devices %}
+  <tr>
+    <td class="muted">{{ d.first_seen | ago }}</td>
+    <td>{{ d.hostname or d.ip or "&mdash;" | safe }}</td>
+    <td>{{ d.vendor or "&mdash;" | safe }}</td>
+    <td><code>{{ d.mac }}</code></td>
+    <td><span class="badge {{ 'pill-known' if d.is_known else 'pill-unknown' }}">{{ 'known' if d.is_known else 'new' }}</span></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="muted">Waiting for the first sensor report&hellip;</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

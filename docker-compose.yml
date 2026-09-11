@@ -1,0 +1,52 @@
+# Laptop demo stack: a hub plus a synthetic sensor that feeds it fake findings
+# so the dashboard is populated without touching a real network.
+#
+#   docker compose up --build   ->   http://localhost:8080
+#
+# Single-host REAL capture instead of the demo: comment out `demo-sensor`,
+# uncomment `sensor` at the bottom, and run on Linux (host networking + caps
+# are not available on Docker Desktop for macOS/Windows).
+
+services:
+  hub:
+    build: .
+    command: ["netsentinel", "hub"]
+    environment:
+      NETSENTINEL_ROLE: hub
+      NETSENTINEL_API_TOKEN: demo-token-change-me
+      NETSENTINEL_NOTIFY_BACKEND: log
+      NETSENTINEL_BLOCKLIST_PATH: /app/data/blocklist.txt
+    ports:
+      - "8080:8080"
+    volumes:
+      - hub-data:/data
+
+  demo-sensor:
+    build: .
+    command: ["python", "/app/deploy/demo_sensor.py"]
+    environment:
+      NETSENTINEL_HUB_URL: http://hub:8080
+      NETSENTINEL_API_TOKEN: demo-token-change-me
+      NETSENTINEL_SENSOR_ID: demo-sensor
+    volumes:
+      - ./deploy/demo_sensor.py:/app/deploy/demo_sensor.py:ro
+    depends_on:
+      - hub
+
+  # Real single-host capture (Linux only). Replaces `demo-sensor`.
+  # sensor:
+  #   build: .
+  #   command: ["netsentinel", "sensor"]
+  #   network_mode: host            # so it can see LAN traffic + reach the hub on localhost
+  #   cap_add: ["NET_RAW", "NET_ADMIN"]
+  #   environment:
+  #     NETSENTINEL_ROLE: sensor
+  #     NETSENTINEL_HUB_URL: http://127.0.0.1:8080
+  #     NETSENTINEL_API_TOKEN: demo-token-change-me
+  #     NETSENTINEL_SENSOR_ID: sensor-1
+  #     NETSENTINEL_MONITOR_INTERFACE: eth0
+  #     NETSENTINEL_LOCAL_SUBNET: 192.168.1.0/24
+  #   depends_on: [hub]
+
+volumes:
+  hub-data:
